@@ -1,0 +1,53 @@
+{
+"workflow":{
+		"name": "Subscription Workflow",
+		"version": "1.0",
+		"author": "FlowUser",
+		"type":  "sync",
+		"tasks": [	
+			        	{
+							"name": "start", "version":"1.0", "activeOn":"","inactiveOn":"",
+							"goFunction": "flowStart",
+							"outcomes": [ {"outcome":{"value":"DEFAULT","nextTask":"Subscribe"}} ]
+						},
+			        	{
+							"name": "subscribe", "version":"1.0", "activeOn":"","inactiveOn":"",
+							"goFunction": "swSubscribe",
+							"outcomes":
+									[
+										{"value":"DEFAULT","nextTask":"end"},
+							 			{"value":"INFORM","nextTask":"assignNotifyJson"}
+									]
+						}
+			,  			{
+							"name": "assignNotifyJson", "version":"1.0", "activeOn":"","inactiveOn":"",
+							"goFunction": "swAssignNotifyJson",
+							"outcomes":
+									[
+										{"value":"DEFAULT","nextTask":"notify"}
+									]
+						}
+			,       	{
+							"name": "notify", "version":"1.0", "activeOn":"","inactiveOn":"",
+							"goFunction": "flowRest", 
+							"taskParams": [{"name": "jsonParams","value":"", "deriveFrom": "notifyJson"}, 										 {"name":"url","value":"", "deriveFrom":"notifyURL"},
+										{"name":"callType","value":"sync"}],
+							"outcomes":[  {"value":"","nextTask":"end"} ]
+						}
+			,       	{
+							"name": "end", "version":"1.0", "activeOn":"","inactiveOn":"",
+							"goFunction": "flowEnd",
+							"outcomes":[ {"value":"DEFAULT","nextTask":""} ]
+						} 
+		],
+		
+		
+		"globalParams": {
+			"param": { "name":"package", "type":"String", "default":""},
+			"param": { "name":"subscriberId", "type":"Int", "default":""},
+			"param": { "name":"notifyJson", "type":"String", "default":""},
+			"param": { "name":"notifyURL", "type":"String", "default":""}
+		}
+		
+}
+}
