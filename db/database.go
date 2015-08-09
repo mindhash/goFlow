@@ -15,3 +15,12 @@ type Database struct {
 	*DatabaseContext
 	user string
 }
+
+
+type Body map[string]interface{}
+
+
+// Makes a Database object given its name and bucket.
+func GetDatabase(context *DatabaseContext, user string) (*Database, error) {
+	return &Database{context, user}, nil
+}

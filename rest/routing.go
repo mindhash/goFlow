@@ -3,8 +3,7 @@ package rest
 import (
 	"github.com/gorilla/mux"
 	"net/http"
-	"regexp"
-	"strconv"
+	"regexp" 
 	"strings"
 )
 
@@ -22,7 +21,7 @@ func init() {
 	docWithSlashPathRegex, _ = regexp.Compile("/" + dbRegex + "/[^_].*%2[fF]")
 }
 
-func createHandler(sc *ServerContext, privs handlerPrivs) (*mux.Router, *mux.Router) {
+func createHandler(sc *ServerContext, privs handlerPrivs) (*mux.Router) {
 	r := mux.NewRouter()
 	r.StrictSlash(true)
 	
@@ -47,13 +46,13 @@ func wrapRouter(sc *ServerContext, privs handlerPrivs, router *mux.Router) http.
 		var match mux.RouteMatch
 
 		// Inject CORS if enabled and requested and not admin port
-		originHeader := rq.Header["Origin"]
-		if privs != adminPrivs && sc.config.CORS != nil && len(originHeader) > 0 {
-			origin := matchedOrigin(sc.config.CORS.Origin, originHeader)
-			response.Header().Add("Access-Control-Allow-Origin", origin)
-			response.Header().Add("Access-Control-Allow-Credentials", "true")
-			response.Header().Add("Access-Control-Allow-Headers", strings.Join(sc.config.CORS.Headers, ", "))
-		}
+		//originHeader := rq.Header["Origin"]
+		//!if privs != adminPrivs && sc.config.CORS != nil && len(originHeader) > 0 {
+		//	origin := matchedOrigin(sc.config.CORS.Origin, originHeader)
+		//	response.Header().Add("Access-Control-Allow-Origin", origin)
+		//	response.Header().Add("Access-Control-Allow-Credentials", "true")
+		//	response.Header().Add("Access-Control-Allow-Headers", strings.Join(sc.config.CORS.Headers, ", "))
+		//}
 
 		if router.Match(rq, &match) {
 			router.ServeHTTP(response, rq)
@@ -73,10 +72,10 @@ func wrapRouter(sc *ServerContext, privs handlerPrivs, router *mux.Router) http.
 				h.writeStatus(http.StatusNotFound, "unknown URL")
 			} else {
 				response.Header().Add("Allow", strings.Join(options, ", "))
-				if privs != adminPrivs && sc.config.CORS != nil && len(originHeader) > 0 {
-					response.Header().Add("Access-Control-Max-Age", strconv.Itoa(sc.config.CORS.MaxAge))
-					response.Header().Add("Access-Control-Allow-Methods", strings.Join(options, ", "))
-				}
+				//if privs != adminPrivs && sc.config.CORS != nil && len(originHeader) > 0 {
+				//	response.Header().Add("Access-Control-Max-Age", strconv.Itoa(sc.config.CORS.MaxAge))
+				//	response.Header().Add("Access-Control-Allow-Methods", strings.Join(options, ", "))
+				//}
 				if rq.Method != "OPTIONS" {
 					h.writeStatus(http.StatusMethodNotAllowed, "")
 				} else {

@@ -3,8 +3,6 @@ package rest
 
 import (
 	"bytes"
-	"compress/gzip"
-	"encoding/base64"
 	"encoding/json"
 	"expvar"
 	"fmt"
@@ -24,6 +22,7 @@ import (
  
 	"github.com/mindhash/goFlow/base"
 	"github.com/mindhash/goFlow/db"
+	"github.com/mindhash/goFlow/auth"
 )
 
 
@@ -33,6 +32,13 @@ var kBadRequestError = base.HTTPErrorf(http.StatusMethodNotAllowed, "Bad Request
 
 var restExpvars = expvar.NewMap("goflow_rest")
 
+// If set to true, JSON output will be pretty-printed.
+var PrettyPrint bool = false
+
+// If set to true, diagnostic data will be dumped if there's a problem with MIME multipart data
+var DebugMultipart bool = false
+
+var lastSerialNum uint64 = 0
 
 func init() {
 	DebugMultipart = (os.Getenv("GatewayDebugMultipart") != "")
@@ -47,7 +53,7 @@ type handler struct {
 	statusMessage  string
 	requestBody    io.ReadCloser
 	db             *db.Database
-	user           string//auth.User
+	user           auth.User
 	privs          handlerPrivs
 	startTime      time.Time
 	serialNumber   uint64
@@ -96,12 +102,13 @@ func (h *handler) invoke(method handlerMethod) error {
 	case "":
 		h.requestBody = h.rq.Body
 	default:
-		return base.HTTPErrorf(http.StatusUnsupportedMediaType, "Unsupported Content-Encoding; use gzip")
+		return base.HTTPErrorf(http.StatusUnsupportedMediaType, "Unsupported Content-Encoding;")
 	}
 	
 	// If there is a "db" path variable, look up the database context:
 	var dbContext *db.DatabaseContext
 	if dbname := h.PathVar("db"); dbname != "" {
+		var err error
 		if dbContext, err = h.server.GetDatabase(dbname); err != nil {
 			h.logRequestLine()
 			return err
@@ -121,6 +128,7 @@ func (h *handler) invoke(method handlerMethod) error {
 	// Now set the request's Database (i.e. context + user)
 	if dbContext != nil {
 		//h.db, err = db.GetDatabase(dbContext, h.user)
+		var err error
 		h.db, err = db.GetDatabase(dbContext, "") 
 		if err != nil {
 			return err
@@ -245,32 +253,34 @@ func (h *handler) readJSON() (db.Body, error) {
 
 // Parses a JSON request body into a custom structure.
 func (h *handler) readJSONInto(into interface{}) error {
-	return db.ReadJSONFromMIME(h.rq.Header, h.requestBody, into)
+	//return db.ReadJSONFromMIME(h.rq.Header, h.requestBody, into)
+	return nil
 }
 
 // Reads & parses the request body, handling either JSON or multipart.
 func (h *handler) readDocument() (db.Body, error) {
-	contentType, attrs, _ := mime.ParseMediaType(h.rq.Header.Get("Content-Type"))
+	//!contentType,  attrs, _ := mime.ParseMediaType(h.rq.Header.Get("Content-Type"))
+	contentType, _ , _ := mime.ParseMediaType(h.rq.Header.Get("Content-Type"))
 	switch contentType {
 	case "", "application/json":
 		return h.readJSON()
-	case "multipart/related":
-		if DebugMultipart {
-			raw, err := h.readBody()
-			if err != nil {
-				return nil, err
-			}
-			reader := multipart.NewReader(bytes.NewReader(raw), attrs["boundary"])
-			body, err := db.ReadMultipartDocument(reader)
-			if err != nil {
-				ioutil.WriteFile("GatewayPUT.mime", raw, 0600)
-				base.Warn("Error reading MIME data: copied to file GatewayPUT.mime")
-			}
-			return body, err
-		} else {
-			reader := multipart.NewReader(h.requestBody, attrs["boundary"])
-			return db.ReadMultipartDocument(reader)
-		}
+	//case "multipart/related":
+	//	if DebugMultipart {
+	//		raw, err := h.readBody()
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//		reader := multipart.NewReader(bytes.NewReader(raw), attrs["boundary"])
+	//		body, err := db.ReadMultipartDocument(reader)
+	//		if err != nil {
+	//			ioutil.WriteFile("GatewayPUT.mime", raw, 0600)
+	//			base.Warn("Error reading MIME data: copied to file GatewayPUT.mime")
+	//		}
+	//		return body, err
+	//	} else {
+	//		reader := multipart.NewReader(h.requestBody, attrs["boundary"])
+	//		return db.ReadMultipartDocument(reader)
+	//	}
 	default:
 		return nil, base.HTTPErrorf(http.StatusUnsupportedMediaType, "Invalid content type %s", contentType)
 	}
@@ -315,9 +325,9 @@ func (h *handler) writeJSONStatus(status int, value interface{}) {
 	}
 	h.setHeader("Content-Type", "application/json")
 	if h.rq.Method != "HEAD" {
-		if len(jsonOut) < 1000 {
-			h.disableResponseCompression()
-		}
+		//if len(jsonOut) < 1000 {
+		//	h.disableResponseCompression()
+		//}
 		h.setHeader("Content-Length", fmt.Sprintf("%d", len(jsonOut)))
 		if status > 0 {
 			h.response.WriteHeader(status)
@@ -409,13 +419,14 @@ func (h *handler) writeStatus(status int, message string) {
 		}
 	}
 
-	h.disableResponseCompression()
+//	h.disableResponseCompression()
 	h.setHeader("Content-Type", "application/json")
 	h.response.WriteHeader(status)
 	h.setStatus(status, message)
 	jsonOut, _ := json.Marshal(db.Body{"error": errorStr, "reason": message})
 	h.response.Write(jsonOut)
 }
+
 
 // Returns the integer value of a URL query, restricted to a min and max value,
 // but returning 0 if missing or unparseable.  If allowZero is true, values coming in
@@ -449,6 +460,8 @@ func getRestrictedIntFromString(rawValue string, defaultValue, minValue, maxValu
 		allowZero,
 	)
 }
+
+
 
 func getRestrictedInt(rawValue *uint64, defaultValue, minValue, maxValue uint64, allowZero bool) uint64 {
 

@@ -1,8 +1,7 @@
 package rest
 
 import (
-	"encoding/json"
-	"net/http"
+	"fmt"
 )
 
 const ServerName = "GoFlow - Simple Workflow"
@@ -20,7 +19,7 @@ func (h *handler) handleRoot() error {
 	response := map[string]interface{}{
 		"goflow": "Welcome",
 		"version": LongVersionString,
-		"vendor":  db.Body{"name": ServerName, "version": VersionNumber},
+		"vendor":  map[string]interface{}{"name": ServerName, "version": VersionNumber},
 	}
 	//if h.privs == adminPrivs {
 	//	response["ADMIN"] = true
