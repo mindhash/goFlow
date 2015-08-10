@@ -11,8 +11,8 @@ import (
 type ServerContext struct {
 	config      *ServerConfig
 	databases_  map[string]*db.DatabaseContext
-//	lock        sync.RWMutex
-	statsTicker *time.Ticker
+	lock        sync.RWMutex
+//	statsTicker *time.Ticker
 	HTTPClient  *http.Client
 }
 
