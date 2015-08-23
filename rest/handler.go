@@ -253,8 +253,36 @@ func (h *handler) readJSON() (db.Body, error) {
 
 // Parses a JSON request body into a custom structure.
 func (h *handler) readJSONInto(into interface{}) error {
-	//return db.ReadJSONFromMIME(h.rq.Header, h.requestBody, into)
+	
+	contentType := h.rq.Header.Get("Content-Type")
+	if contentType != "" && !strings.HasPrefix(contentType, "application/json") {
+		return base.HTTPErrorf(http.StatusUnsupportedMediaType, "Invalid content type %s", contentType)
+	}
+ 
+ 	//TO DO: zip version to be added
+	
+	decoder := json.NewDecoder(h.requestBody)
+	if err := decoder.Decode(into); err != nil {
+		base.Warn("Couldn't parse JSON in HTTP request: %v", err)
+		return base.HTTPErrorf(http.StatusBadRequest, "Bad JSON")
+	}
 	return nil
+}
+
+//TO DO: Need to add multi part reads
+//This function handles marshaling of input JSON into Struct
+func (h *handler) readObject(obj interface{}) ( interface{}, error){
+	
+	contentType, _ , _ := mime.ParseMediaType(h.rq.Header.Get("Content-Type"))
+	
+	//process JSON Documents only
+	switch contentType {
+		
+	case "", "application/json":
+		return obj, h.readJSONInto(obj)
+	default:
+		return nil, base.HTTPErrorf(http.StatusUnsupportedMediaType, "Invalid content type %s", contentType)
+	}
 }
 
 // Reads & parses the request body, handling either JSON or multipart.

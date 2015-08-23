@@ -43,10 +43,16 @@ func (v *IntMax) String() string {
 	return strconv.FormatInt(v.i, 10)
 }
 
+func FloatToString(input_num float64) string {
+    // to convert a float number to a string
+    return strconv.FormatFloat(input_num, 'f', 6, 64)
+}
+
 func (v *IntMax) SetIfMax(value int64) {
 	v.mu.Lock()
 	defer v.mu.Unlock()
 	if value > v.i {
 		v.i = value
 	}
+	
 }

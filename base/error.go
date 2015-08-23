@@ -38,7 +38,7 @@ func ErrorAsHTTPStatus(err error) (int, string) {
 	return http.StatusInternalServerError, fmt.Sprintf("Internal error: %v", err)
 }
 
-// Returns the standard CouchDB error string for an HTTP error status.
+// Returns the standard GoFlow error string for an HTTP error status.
 // These are important for compatibility, as some REST APIs don't show numeric statuses,
 // only these strings.
 func GoFlowHTTPErrorName(status int) string {

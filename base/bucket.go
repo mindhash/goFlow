@@ -5,7 +5,11 @@ package base
 // if using Tiedot DB, bucket represents data directory
 
 
-import(
+import( 
+	"encoding/json" 
+	"time"
+	"log"
+	"fmt"
 	"github.com/boltdb/bolt"
 )
 
@@ -15,10 +19,10 @@ type DbHandleInterface interface{
 		GetRaw(k string) (rv []byte, err error)
 		PutRaw(k string, v []byte) (added bool, err error)
 		//Delete(k string) error
-		Close()
+		Close() (err error)
 }
 
-type dbhandle DbHandleInterface
+type DbHandle DbHandleInterface
 
 
 // Full specification of how to connect to a bucket
@@ -35,67 +39,81 @@ type BoltDbHandle struct {
 }
 
 func (dbhandle BoltDbHandle) GetName() string {
-	return dbhandle.Name		// probably need to use spec
+	return dbhandle.spec.Name		// return Database name from spec
 }
 
 func (dbhandle BoltDbHandle) PutRaw(k string, v []byte) (added bool, err error){
 	tx, err := dbhandle.DB.Begin(true)
 	if err != nil {
-	    return err
+	    return false, err
 	}
 	defer tx.Rollback()
 
 	// Use the transaction...
-	_, err := tx.Bucket([]byte(dbhandle.Bucket))
-	if err != nil {
-	    return err
-	}
-
-	err := b.Put([]byte(k), []byte(v))
+	b := tx.Bucket([]byte(dbhandle.Bucket))			// need to check error handling here
 	
+	//if err != nil {
+	//    return false, err
+	//}
+
+	err = b.Put([]byte(k), []byte(v)) 
 	if err != nil {
-	    return err
+	    return false, err
 	}
 	  
 	// Commit the transaction and check for error.
-	if err := tx.Commit(); err != nil {
-	    return err
+	if err = tx.Commit(); err != nil {
+	    return false, err
 	}
-	return 
+	return true, nil
 }
 
+// get  value for a key
+// needs work 
+func (dbhandle BoltDbHandle) Get(k string) (v interface{},err error){
+	data,err := dbhandle.GetRaw(k)
+	if err != nil {
+	    return nil,err
+	}
+	
+	err = json.Unmarshal([]byte(data), v)
+	if err != nil {
+		Warn("Error unmarshaling body of doc %q: %s", k, err)
+		return nil, err
+	}
+	return v,nil
+}
 
-
+// get json value for a key
 func (dbhandle BoltDbHandle) GetRaw(k string) (v []byte, err error) {
 	//start bolt transaction
 	tx, err := dbhandle.DB.Begin(true)
 	if err != nil {
-	    return err
+	    return nil, err
 	}
 	defer tx.Rollback()
 	
 	// Use the transaction...
-	_, err := tx.Bucket([]byte(dbhandle.Bucket))
+	b := tx.Bucket([]byte(dbhandle.Bucket))
 	if err != nil {
-	    return err
+	    return  nil, err
 	}
 	
-	v := b.Get([]byte(k))
-	
-	fmt.Printf("The Key Value is: %s\n", v)
+	v = b.Get([]byte(k))
 	
 	// Commit the transaction and check for error.
 	if err := tx.Commit(); err != nil {
-	    return err
+	    return  nil, err
 	}
-	return 
+	return v, nil
 }
 
-func (dbhandle BoltDbHandle) func close(){
-	dbhandle.DB.close()
+func (dbhandle BoltDbHandle) close() error {
+	err:=dbhandle.close()  // TO DO: need to handle error here
     if err != nil {
         log.Fatal(err)
     }
+	return nil
 }
 
 
@@ -109,20 +127,21 @@ func GetBoltDbHandle(spec DatabaseSpec) (dbhandle DbHandle, err error) {
 	}
 	
 	// Start a writable transaction.
-	tx, err := dbconn.Begin(true)
+	tx, err:= dbconn.Begin(true) 
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer tx.Rollback()
 			
-	_, err := tx.CreateBucketIfNotExists([]byte(spec.BucketName))
+	_, err = tx.CreateBucketIfNotExists([]byte(spec.BucketName))
 	if err != nil {
-	    return fmt.Errorf("create bucket: %s", err)
+	    return nil, fmt.Errorf("create bucket: %s", err)
 	}
 
 	// Commit the transaction and check for error.
+	 
 	if err := tx.Commit(); err != nil {
-		return err
+		return nil,err
 	}
 	 
 	dbhandle = BoltDbHandle{dbconn, spec.BucketName,spec}
@@ -134,7 +153,7 @@ func GetBoltDbHandle(spec DatabaseSpec) (dbhandle DbHandle, err error) {
 func GetDbHandle(spec DatabaseSpec) (dbhandle DbHandle, err error) {
 	//TO DO: validate spec
 	
-	dbhandle, err := GetBoltDbHandle(spec)
+	dbhandle, err = GetBoltDbHandle(spec)
 	if err != nil {
 			panic(err)
 	}

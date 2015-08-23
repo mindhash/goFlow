@@ -2,24 +2,22 @@ package rest
 
 import (
 	"github.com/gorilla/mux"
-	"net/http"
-	"regexp" 
+	"net/http" 
+	"regexp"
 	"strings"
 )
 
 
-// Regexes that match database or doc ID component of a path.
-// These are needed to avoid conflict with handlers that match special underscore-prefixed paths
-// like "/_profile" and "/db/_all_docs".
-const dbRegex = "[^_/][^/]*"
+// Regexes that match doc ID component of a path. 
 const docRegex = "[^_/][^/]*"
 
 // Regex that matches a URI containing a regular doc ID with an escaped "/" character
 var docWithSlashPathRegex *regexp.Regexp
 
 func init() {
-	docWithSlashPathRegex, _ = regexp.Compile("/" + dbRegex + "/[^_].*%2[fF]")
+	docWithSlashPathRegex, _ = regexp.Compile("/"  + "/[^_].*%2[fF]")
 }
+
 
 func createHandler(sc *ServerContext, privs handlerPrivs) (*mux.Router) {
 	r := mux.NewRouter()
@@ -27,6 +25,8 @@ func createHandler(sc *ServerContext, privs handlerPrivs) (*mux.Router) {
 	
 	// Global operations:
 	r.Handle("/", makeHandler(sc, privs, (*handler).handleRoot)).Methods("GET", "HEAD")
+	r.Handle("/_flow/{flowDef}/{flowDefKey}", makeHandler(sc, privs, (*handler).handlePutFlowDef)).Methods("PUT")
+	r.Handle("/_flow/{flowDef}", makeHandler(sc, privs, (*handler).handlePutFlowDef)).Methods("POST")
 	return r
 }
 

@@ -1,5 +1,12 @@
 package db
 
+import (
+	"time"
+	"net/http"
+	"regexp"
+	"expvar"
+	"github.com/mindhash/goFlow/base"
+)
 
 // Basic description of a database. Shared between all Database objects on the same database.
 // This object is thread-safe so it can be shared between HTTP handlers.
@@ -10,17 +17,16 @@ type DatabaseContext struct {
 }
 
 
-// Represents a simulated CouchDB database. A new instance is created for each HTTP request,
+// Represents a database. A new instance is created for each HTTP request,
 // so this struct does not have to be thread-safe.
 type Database struct {
 	*DatabaseContext
 	user string 
 }
 
-type Body map[string]interface{}
 
-// All special/internal documents the gateway creates have this prefix in their keys.
-const kWfKeyPrefix = "_sync:")
+// All special/internal documents have this prefix in their keys.
+const kWfKeyPrefix = "_goflow:"
 
 var dbExpvars = expvar.NewMap("goflow_db")
 
@@ -34,6 +40,7 @@ func ValidateDatabaseName(dbName string) error {
 	return nil
 }
 
+// open new database connection handle
 func openDatabase(spec base.DatabaseSpec) (dbhandle base.DbHandle, err error) {
 	
 	dbhandle, err = base.GetDbHandle(spec)
@@ -46,11 +53,45 @@ func openDatabase(spec base.DatabaseSpec) (dbhandle base.DbHandle, err error) {
 	return
 }
 
+// Creates a new DatabaseContext on a database. The DB and bucket will be closed when this context closes.
+func NewDatabaseContext(dbName string, dbhandle base.DbHandle) (*DatabaseContext, error) {
+	
+	if err := ValidateDatabaseName(dbName); err != nil {
+		return nil, err
+	}
+	
+	context := &DatabaseContext{
+		Name:       dbName,
+		DbHandle:     dbhandle,
+		StartTime:  time.Now(),
+	}
+	return context, nil
+}
+
+// close database. important to close connection with DB to avoid locks
+func (context *DatabaseContext) Close() {
+	context.DbHandle.Close()
+	context.DbHandle = nil
+}
+
+// check if DB is closed
+func (context *DatabaseContext) IsClosed() bool {
+	return context.DbHandle == nil
+}
 
 
-// Makes a Database object given its name and bucket.
+// Makes a database object given its name and bucket.
 func GetDatabase(context *DatabaseContext, user string) (*Database, error) {
 	return &Database{context, user}, nil
 }
 
+// create new database object
+func CreateDatabase(context *DatabaseContext) (*Database, error) {
+	return &Database{context, ""}, nil
+}
+
+func (db *Database) SameAs(otherdb *Database) bool {
+	return db != nil && otherdb != nil &&
+		db.DbHandle == otherdb.DbHandle
+}
 
