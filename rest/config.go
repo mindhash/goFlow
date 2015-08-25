@@ -38,9 +38,9 @@ func ParseCommandLine() {
 
 	
 	
-	dbName := flag.String("dbName","flowDB","Default Database Name")
+	dbName := flag.String("dbName","flowdb","Default Database Name")
 	addr   := flag.String("addr","localhost:4984","HTTP Server Address")
-	dbBucket := flag.String("dbBucket","/Users/amolumbarkar/GoProjects","Data Directory")
+	dbBucket := flag.String("dbBucket","flowBucket","Data Directory")
 	pretty := flag.Bool("pretty", false, "Pretty-print JSON responses")
 	flag.Parse()
 	

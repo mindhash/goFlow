@@ -18,6 +18,15 @@ type ServerContext struct {
 	HTTPClient  *http.Client
 }
 
+func NewServerContext(config *ServerConfig) *ServerContext {
+	sc := &ServerContext{
+		config:     config, 
+		HTTPClient: http.DefaultClient,
+	}
+	return sc
+}
+
+
 //get existing or add database from config
 func (sc *ServerContext) getOrAddDatabaseFromConfig(config *DbConfig) (*db.DatabaseContext, error) {
 	// Obtain write lock during add database, to avoid race condition when creating based on ConfigServer
@@ -80,15 +89,8 @@ func (sc *ServerContext) AddDatabaseFromConfig(config *DbConfig) (*db.DatabaseCo
 	return sc.getOrAddDatabaseFromConfig(config)
 }
 
-func NewServerContext(config *ServerConfig) *ServerContext {
-	sc := &ServerContext{
-		config:     config, 
-		HTTPClient: http.DefaultClient,
-	}
-	return sc
-}
 
-// 
+//  
 func (sc *ServerContext) GetDatabase() (*db.DatabaseContext, error) {
 	sc.lock.RLock()
 	dbc := sc.database_

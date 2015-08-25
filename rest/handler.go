@@ -76,7 +76,7 @@ func makeHandler(server *ServerContext, privs handlerPrivs, method handlerMethod
 		h := newHandler(server, privs, r, rq)
 		err := h.invoke(method)
 		h.writeError(err)
-		h.logDuration(true)
+		h.logDuration(true) 
 	})
 }
 
@@ -94,6 +94,7 @@ func newHandler(server *ServerContext, privs handlerPrivs, r http.ResponseWriter
 
 // Top-level handler call. It's passed a pointer to the specific method to run.
 func (h *handler) invoke(method handlerMethod) error {
+	 
 	restExpvars.Add("requests_total", 1)
 	restExpvars.Add("requests_active", 1)
 	defer restExpvars.Add("requests_active", -1)
@@ -105,36 +106,36 @@ func (h *handler) invoke(method handlerMethod) error {
 		return base.HTTPErrorf(http.StatusUnsupportedMediaType, "Unsupported Content-Encoding;")
 	}
 	
+	var err error
+	
 	// If there is a "db" path variable, look up the database context:
-	var dbContext *db.DatabaseContext
-	if dbname := h.PathVar("db"); dbname != "" {
-		var err error
-		if dbContext, err = h.server.GetDatabase(); err != nil {
+	var dbContext *db.DatabaseContext 
+	if dbContext, err = h.server.GetDatabase(); err != nil {
 			h.logRequestLine()
 			return err
 		}
-	}
 	
+		
 	// Authenticate, if not on admin port:
+	//TO DO: Add authorization for DB Context 
 	//if h.privs != adminPrivs {
 	//	if err = h.checkAuth(dbContext); err != nil {
 	//		h.logRequestLine()
 	//		return err
 	//	}
 	//}
-	
+
 	h.logRequestLine()
-	
+
 	// Now set the request's Database (i.e. context + user)
 	if dbContext != nil {
-		//h.db, err = db.GetDatabase(dbContext, h.user)
-		var err error
-		h.db, err = db.GetDatabase(dbContext, "") 
+		h.db, err = db.GetDatabase(dbContext, nil)
+		
 		if err != nil {
 			return err
 		}
 	}
-
+	 
 	return method(h) // Call the actual handler code
 	
 }

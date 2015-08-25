@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"regexp"
 	"expvar"
+	"github.com/mindhash/goFlow/auth"
 	"github.com/mindhash/goFlow/base"
 )
 
@@ -21,7 +22,7 @@ type DatabaseContext struct {
 // so this struct does not have to be thread-safe.
 type Database struct {
 	*DatabaseContext
-	user string 
+	user auth.User 
 }
 
 
@@ -80,14 +81,14 @@ func (context *DatabaseContext) IsClosed() bool {
 }
 
 
-// Makes a database object given its name and bucket.
-func GetDatabase(context *DatabaseContext, user string) (*Database, error) {
+// Makes a database object given context and user.
+func GetDatabase(context *DatabaseContext, user auth.User) (*Database, error) {
 	return &Database{context, user}, nil
 }
 
 // create new database object
 func CreateDatabase(context *DatabaseContext) (*Database, error) {
-	return &Database{context, ""}, nil
+	return &Database{context, nil}, nil
 }
 
 func (db *Database) SameAs(otherdb *Database) bool {

@@ -14,10 +14,15 @@ func (h *handler) handlePostFlowDef() error {
 	flowDefName := h.PathVar("flowDef")
 	base.Logf("...Flow Definition Name...", flowDefName)
 	
+	if h.db == nil {
+		base.Logf("DB Not Available")
+	}
+	
 	//generate flow def key
 	flowDefKey,err := NextFlowDefKey(h.db,flowDefName )
+	base.Logf("Flow Def Key:%s",flowDefKey)
 	
-	if flowDefKey != ""{
+	if flowDefKey == ""{
 		return base.HTTPErrorf(http.StatusBadRequest, "Could not generate Flow Def Key") 
 	}
 	
@@ -37,7 +42,7 @@ func (h *handler) handlePutFlowDef() error {
 	
 	// derive flow def key from  URL path
 	flowDefKey := h.PathVar("flowDefKey")
-	base.Logf("...Flow Definition Key...", flowDefKey)
+	base.Logf("Flow Definition Key: ", flowDefKey)
 	
 	if flowDefKey != "" {
 		return base.HTTPErrorf(http.StatusBadRequest, "Invalid Flow Def Key") 
@@ -54,10 +59,9 @@ func (h *handler) handlePutFlowDef() error {
 	return nil
 }
  
+// get new key ID for flow definition
 func NextFlowDefKey (d *db.Database, flowName string) (string,error) {
 	newVersionNum := 1.0
-	
-	_,_ = d.PutValue("_flow:" + flowName + ":_lastversion","1.0")
 	
 	// get flow def last version    
 	lastVersionStr,err := d.GetValue("_flow:" + flowName + ":_lastversion")	
