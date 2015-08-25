@@ -86,6 +86,9 @@ func (dbhandle BoltDbHandle) Get(k string) (v interface{},err error){
 
 // get json value for a key
 func (dbhandle BoltDbHandle) GetRaw(k string) (v []byte, err error) {
+	
+	Logf("Starting GetRaw for key",k)
+	
 	//start bolt transaction
 	tx, err := dbhandle.DB.Begin(true)
 	if err != nil {
@@ -105,6 +108,7 @@ func (dbhandle BoltDbHandle) GetRaw(k string) (v []byte, err error) {
 	if err := tx.Commit(); err != nil {
 	    return  nil, err
 	}
+	Logf("Ending GetRaw for key",k)
 	return v, nil
 }
 

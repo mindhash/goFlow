@@ -24,7 +24,7 @@ type ServerConfig struct {
 	Pretty						   bool
 	//Log                            []string        // Log keywords to enable
 	//LogFilePath                    *string         // Path to log file, if missing write to stderr 
-	Databases                      DbConfigMap     // Pre-configured databases, mapped by name
+	Database                      *DbConfig     // Pre-configured databases, mapped by name
 	MaxIncomingConnections 		   *int            // Max # of incoming HTTP connections to accept
 }
 
@@ -33,7 +33,6 @@ type DbConfig struct {
 	Bucket             *string						//Bucket or Directory name for DB  
 }
 
-type DbConfigMap map[string]*DbConfig
 
 func ParseCommandLine() {
 
@@ -45,7 +44,7 @@ func ParseCommandLine() {
 	pretty := flag.Bool("pretty", false, "Pretty-print JSON responses")
 	flag.Parse()
 	
-	config = &ServerConfig { Interface: addr, Pretty:           *pretty,Databases: map[string]*DbConfig{ *dbName:{Name: *dbName,Bucket:dbBucket}}}
+	config = &ServerConfig { Interface: addr, Pretty:           *pretty,Database: &DbConfig {Name: *dbName,Bucket:dbBucket}}
 }
 
 func (config *ServerConfig) serve(addr string, handler http.Handler) {
@@ -62,16 +61,18 @@ func (config *ServerConfig) serve(addr string, handler http.Handler) {
 
 func RunServer(config *ServerConfig) {
 	
+	//This variable used for pretty JSON reponses
 	PrettyPrint = config.Pretty
 	
-	
+	//New Server Context
 	sc := NewServerContext(config)
 	
-	for _, dbConfig := range config.Databases {
-			if _, err := sc.AddDatabaseFromConfig(dbConfig); err != nil {
-				base.LogFatal("Error opening database: %v", err)
-			}
-	}
+	//Open Database and add to server context 
+	if _, err := sc.AddDatabaseFromConfig(config.Database); err != nil {
+			base.LogFatal("Error opening database: %v", err)
+		}
+		
+	defer sc.CloseDatabase()
 	
 	base.Logf("Starting server on %s ...", *config.Interface)
 	config.serve(*config.Interface, CreatePublicHandler(sc))

@@ -41,7 +41,7 @@ func ValidateDatabaseName(dbName string) error {
 }
 
 // open new database connection handle
-func openDatabase(spec base.DatabaseSpec) (dbhandle base.DbHandle, err error) {
+func OpenDatabase(spec base.DatabaseSpec) (dbhandle base.DbHandle, err error) {
 	
 	dbhandle, err = base.GetDbHandle(spec)
 	

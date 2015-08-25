@@ -12,9 +12,10 @@ func (h *handler) handlePostFlowDef() error {
 	
 	// derive flow name from URL path
 	flowDefName := h.PathVar("flowDef")
+	base.Logf("...Flow Definition Name...", flowDefName)
 	
 	//generate flow def key
-	flowDefKey,err := NextFlowDefKey(h,flowDefName )
+	flowDefKey,err := NextFlowDefKey(h.db,flowDefName )
 	
 	if flowDefKey != ""{
 		return base.HTTPErrorf(http.StatusBadRequest, "Could not generate Flow Def Key") 
@@ -52,13 +53,14 @@ func (h *handler) handlePutFlowDef() error {
 	h.writeJSONStatus(http.StatusCreated, db.Body{"ok": true, "flowDefKey": flowDefKey})
 	return nil
 }
-
-
-func NextFlowDefKey (h *handler, flowName string) (string,error) {
+ 
+func NextFlowDefKey (d *db.Database, flowName string) (string,error) {
 	newVersionNum := 1.0
 	
+	_,_ = d.PutValue("_flow:" + flowName + ":_lastversion","1.0")
+	
 	// get flow def last version    
-	lastVersionStr,err := h.db.GetValue("_flow:" + flowName + ":_lastversion")	
+	lastVersionStr,err := d.GetValue("_flow:" + flowName + ":_lastversion")	
 	
 	if (lastVersionStr != "") {
     	// convert version string to num 

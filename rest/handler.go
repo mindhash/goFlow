@@ -109,7 +109,7 @@ func (h *handler) invoke(method handlerMethod) error {
 	var dbContext *db.DatabaseContext
 	if dbname := h.PathVar("db"); dbname != "" {
 		var err error
-		if dbContext, err = h.server.GetDatabase(dbname); err != nil {
+		if dbContext, err = h.server.GetDatabase(); err != nil {
 			h.logRequestLine()
 			return err
 		}
