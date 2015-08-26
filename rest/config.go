@@ -41,7 +41,7 @@ func ParseCommandLine() {
 	dbName := flag.String("dbName","flowdb","Default Database Name")
 	addr   := flag.String("addr","localhost:4984","HTTP Server Address")
 	dbBucket := flag.String("dbBucket","flowBucket","Data Directory")
-	pretty := flag.Bool("pretty", false, "Pretty-print JSON responses")
+	pretty := flag.Bool("pretty", true, "Pretty-print JSON responses")
 	flag.Parse()
 	
 	config = &ServerConfig { Interface: addr, Pretty:           *pretty,Database: &DbConfig {Name: *dbName,Bucket:dbBucket}}
@@ -80,7 +80,7 @@ func RunServer(config *ServerConfig) {
 }
 
 
-
+// TO DO: Need to check close of DB on exit
 func ServerMain(){
 	fmt.Println("Initiating Server..")
 	ParseCommandLine() 

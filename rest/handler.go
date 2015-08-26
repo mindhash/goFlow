@@ -261,12 +261,13 @@ func (h *handler) readJSONInto(into interface{}) error {
 	}
  
  	//TO DO: zip version to be added
-	
+	  	
 	decoder := json.NewDecoder(h.requestBody)
 	if err := decoder.Decode(into); err != nil {
 		base.Warn("Couldn't parse JSON in HTTP request: %v", err)
 		return base.HTTPErrorf(http.StatusBadRequest, "Bad JSON")
 	}
+	 
 	return nil
 }
 
@@ -340,8 +341,9 @@ func (h *handler) writeJSONStatus(status int, value interface{}) {
 		h.writeStatus(http.StatusNotAcceptable, "only application/json available")
 		return
 	}
-
+	 
 	jsonOut, err := json.Marshal(value)
+	 
 	if err != nil {
 		base.Warn("Couldn't serialize JSON for %v : %s", value, err)
 		h.writeStatus(http.StatusInternalServerError, "JSON serialization failed")
@@ -352,6 +354,9 @@ func (h *handler) writeJSONStatus(status int, value interface{}) {
 		json.Indent(&buffer, jsonOut, "", "  ")
 		jsonOut = append(buffer.Bytes(), '\n')
 	}
+	
+	
+	
 	h.setHeader("Content-Type", "application/json")
 	if h.rq.Method != "HEAD" {
 		//if len(jsonOut) < 1000 {

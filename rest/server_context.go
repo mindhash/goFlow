@@ -106,5 +106,6 @@ func (sc *ServerContext) GetDatabase() (*db.DatabaseContext, error) {
 }
 
 func (sc *ServerContext) CloseDatabase() {
-	
+	//base.Logf("Closing Database")
+	sc.database_.Close()
 }
