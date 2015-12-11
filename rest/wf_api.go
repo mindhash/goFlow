@@ -9,6 +9,8 @@ import (
 )
 
 // HTTP handler for Flow creation
+//TO DO: Need to handle validations. Last Version write for deriving correct Def Keys on update.
+// need to remove flow def from URL 
 func (h *handler) handlePostFlowDef() error {
 	
 	// derive flow name from URL path
@@ -28,7 +30,7 @@ func (h *handler) handlePostFlowDef() error {
 	
 	_, err = h.readObject(wf) 
 	if err != nil { 
-		return base.HTTPErrorf(http.StatusBadRequest, "Flow Definition not found")   //TO DO: Need to relook at error
+		return base.HTTPErrorf(http.StatusBadRequest, "Could not map JSON to WfDef Object")   //TO DO: Need to relook at error
 	}  
 	
 	//base.Logf("Encoding Workflow Def ..%s",wf) 
@@ -65,7 +67,7 @@ func (h *handler) handlePutFlowDef() error {
 	data, _ := json.Marshal(wf)
 	
 	//base.Logf("Saving Workflow Def ...%s",wf) 
-	_, err := h.db.PutDocRaw (flowDefKey, data)
+	_, err = h.db.PutDocRaw (flowDefKey, data)
 	//base.Logf("Done save...") 
 	 
 	if err != nil { 
@@ -113,8 +115,8 @@ func (h *handler) handleGetFlowDef() error {
 	return nil
 }
 
-func writeLastVersion(db *Database , flowName string, version string) error{
-	saved, err := d.PutValue("_flow:" + flowName + ":_lastversion" , version)
+func writeLastVersion(d *db.Database , flowName string, version string) error{
+	_, err := d.PutValue("_flow:" + flowName + ":_lastversion" , version)
 	return err
 }
  

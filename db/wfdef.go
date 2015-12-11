@@ -6,22 +6,24 @@ import (
 	
 	)
 
-type AttributesDef struct {
+type AttributeDef struct {
 	Name string
 	Type string    // String, Byte 
 }
 
 type ActivitiesDef struct {
+	ActivityKey string
 	Name string
-	Active bool 
+	Inactive bool  
 }
 
+
 type WorkflowDef  struct { 
-	FlowDefKey string
+	FlowDefKey string   // Def key is combination of flow name and version 
 	Name string
 	Version string
 	Activities  []ActivitiesDef 
-	 Attributes []AttributesDef
+	 Attributes []AttributeDef
 }
 
 // Returns a new empty document.

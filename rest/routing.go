@@ -26,9 +26,14 @@ func createHandler(sc *ServerContext, privs handlerPrivs) (*mux.Router) {
 	// Global operations:
 	r.Handle("/", makeHandler(sc, privs, (*handler).handleRoot)).Methods("GET", "HEAD")
 	
+	//flow definition
 	r.Handle("/_flow/{flowDef}/{flowDefKey}", makeHandler(sc, privs, (*handler).handlePutFlowDef)).Methods("PUT")
 	r.Handle("/_flow/{flowDef}", makeHandler(sc, privs, (*handler).handlePostFlowDef)).Methods("POST")
 	r.Handle("/_flow/{flowDef}/{flowDefKey}", makeHandler(sc, privs, (*handler).handleGetFlowDef)).Methods("GET")
+	
+	//handle flow instance creation
+	r.Handle("/_instance", makeHandler(sc, privs, (*handler).handlePostFlowTxn)).Methods("POST")
+	
 	return r
 }
 
