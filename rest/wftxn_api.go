@@ -25,9 +25,13 @@ func (h *handler) handlePostFlowTxn() error {
 		return base.HTTPErrorf(http.StatusBadRequest, "Could not map JSON to FlowTxnRequest Object")   
 	}  
 
-	//use flow def key to retrive activities 
+	//use flow def key to retrive workflow raw data and convert it to wf object 
+	flowDefData,_ := h.db.GetDocRaw(flowInstanceReq.FlowDefKey)
+	flowDef := &db.WorkflowDef{}
+	_ =json.Unmarshal(flowDefData, flowDef)
 
-    flowInstance := db.NewFlowInstance(flowInstanceReq)
+
+    flowInstance := db.NewFlowInstance(flowInstanceReq,flowDef)
 	base.Logf("Flow Instance Key:%s",flowInstance.InstanceKey )
 	
 

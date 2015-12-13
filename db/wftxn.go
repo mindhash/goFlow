@@ -6,8 +6,7 @@ import (
 )
 
 type Activity struct {
-	ActivityKey string
-	Name string
+	*ActivitiesDef
 	ActivityInstanceKey string
 	AccessKey string  // used for authorization. shared with worker at the time of job assignment
 	CreationDate time.Time
@@ -18,7 +17,6 @@ type Activity struct {
 	ActualEnd time.Time 
 	Status string
 }
-
 
 
 type Attribute struct {
@@ -40,8 +38,8 @@ type FlowInstance struct{
 	UpdateDate time.Time
 	StartDate time.Time
 	EndDate time.Time
-	Activities []Activity
-	Attributes []Attribute
+	Activities []*Activity
+	Attributes []*Attribute
 }
 
 
@@ -60,10 +58,17 @@ func NewFlowTxnRequest() *FlowTxnRequest{
 }
 
 // try to make this immuatable TO DO
-func NewFlowInstance (ftr *FlowTxnRequest, Activites []Activity ) *FlowInstance{	
+func NewFlowInstance (ftr *FlowTxnRequest, fi *WorkflowDef) *FlowInstance{	
+	
 	newInstanceKey    := base.CreateUUID() 
 
-	return &FlowInstance { FlowDefKey: ftr.FlowDefKey,  InstanceKey: newInstanceKey, Status: "Scheduled",CreationDate: time.Now()}
+	activities  := make([]*Activity, len(fi.Activities))
+	for key,_ := range activities {
+		activities[key].ActivitiesDef = &fi.Activities[key]
+	}  
+
+	 
+	return &FlowInstance { FlowDefKey: ftr.FlowDefKey, Activities: activities, InstanceKey: newInstanceKey, Status: "Scheduled",CreationDate: time.Now()}
 }
 
 
@@ -71,5 +76,5 @@ func NewFlowInstance (ftr *FlowTxnRequest, Activites []Activity ) *FlowInstance{
 func NewActivity(actkey string) *Activity{
 	// need to derive ActivityInstanceKey 
 	newActInstanceId := base.CreateUUID()
-	return &Activity {ActivityInstanceKey: newActInstanceId, ActivityKey: actkey, Status: "Scheduled",CreationDate: time.Now()}
+	return &Activity {ActivityInstanceKey: newActInstanceId,   Status: "Scheduled",CreationDate: time.Now()}
 } 
