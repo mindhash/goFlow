@@ -14,9 +14,8 @@ import (
 func (h *handler) handlePostFlowDef() error {
 	
 	// derive flow name from URL path
-	flowDefName := h.PathVar("flowDef")
+	flowDefName := h.PathVar("flowName")
 	base.Logf("...Flow Definition Name...", flowDefName)
-	
 
 	//generate flow def key
 	flowDefKey,err := NextFlowDefKey(h.db,flowDefName )
@@ -73,6 +72,8 @@ func (h *handler) handlePutFlowDef() error {
 	if err != nil { 
 		return base.HTTPErrorf(http.StatusBadRequest, "Flow Definition Could not be updated")   //TO DO: Need to relook at error
 	}  
+	_,err = h.db.PutDocRaw(wf.Name, []byte(flowDefKey))
+
 	// this should be inside db trx TO DO
 	//_, err =writeLastVersion(h.db , wf.Name , )
 	
@@ -112,6 +113,30 @@ func (h *handler) handleGetFlowDef() error {
 	}
 	
 	h.writeJSONStatus(http.StatusCreated,wf )
+	return nil
+}
+
+// HTTP handler for Flow query
+func (h *handler) handleGetByNameFlowDef() error {
+	// derive flow def key from  URL path
+	flowDef := h.PathVar("flowDef")
+	base.Logf("Flow Definition: ", flowDef)
+	
+	if flowDef == "" {
+		return base.HTTPErrorf(http.StatusBadRequest, 
+			"Invalid Flow Def Name") 
+	}
+	// get all flow def versions 
+
+	data, err := h.db.GetDocRaw (flowDef)
+	if (err != nil){
+		return base.HTTPErrorf(http.StatusBadRequest, 
+			"WF Definition Query Failed")
+	}
+
+	base.Logf("Flow Def Key:%s", string(data))
+	
+	h.writeJSONStatus(http.StatusCreated,nil )
 	return nil
 }
 

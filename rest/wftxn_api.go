@@ -11,6 +11,7 @@ import (
 
 
 // post received a flow Txn Request which is used to generate flow instance
+//TO DO: Need to use flow name from url param instead of def key from json
 
 func (h *handler) handlePostFlowTxn() error {
 	
@@ -24,6 +25,8 @@ func (h *handler) handlePostFlowTxn() error {
 	if err != nil { 
 		return base.HTTPErrorf(http.StatusBadRequest, "Could not map JSON to FlowTxnRequest Object")   
 	}  
+
+	base.Logf("Flow Def Key is",flowInstanceReq.FlowDefKey)
 
 	//use flow def key to retrive workflow raw data and convert it to wf object 
 	flowDefData,_ := h.db.GetDocRaw(flowInstanceReq.FlowDefKey)

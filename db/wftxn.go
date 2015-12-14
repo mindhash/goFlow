@@ -63,8 +63,9 @@ func NewFlowInstance (ftr *FlowTxnRequest, fi *WorkflowDef) *FlowInstance{
 	newInstanceKey    := base.CreateUUID() 
 
 	activities  := make([]*Activity, len(fi.Activities))
+	
 	for key,_ := range activities {
-		activities[key].ActivitiesDef = &fi.Activities[key]
+		activities[key] = &Activity{ ActivitiesDef: &fi.Activities[key]}
 	}  
 
 	 
